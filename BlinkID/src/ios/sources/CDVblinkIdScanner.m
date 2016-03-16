@@ -21,6 +21,8 @@
 
 #import <MicroBlink/MicroBlink.h>
 
+NSString* takenImage;
+
 @interface CDVPlugin () <PPScanDelegate>
 
 @property (nonatomic, retain) CDVInvokedUrlCommand* lastCommand;
@@ -191,7 +193,7 @@
      * @Warning: this option doubles frame processing time
      */
     zxingRecognizerSettings.scanInverse = NO;
-    
+
     return zxingRecognizerSettings;
 }
 
@@ -201,7 +203,6 @@
 
     /********* All recognizer settings are set to their default values. Change accordingly. *********/
 
-
     // Setting this will give you the chance to parse MRZ result, if Mrtd recognizer wasn't
     // successful in parsing (this can happen since MRZ isn't always formatted accoring to ICAO Document 9303 standard.
     // @see http://www.icao.int/Security/mrtd/pages/Document9303.aspx
@@ -210,7 +211,8 @@
     // This is useful if you're at the same time obtaining Dewarped image metadata, since it allows you to obtain dewarped and cropped
     // images of MRTD documents. Dewarped images are returned to scanningViewController:didOutputMetadata: callback,
     // as PPImageMetadata objects with name @"MRTD"
-    mrtdRecognizerSettings.dewarpFullDocument = NO;
+    mrtdRecognizerSettings.dewarpFullDocument = YES;
+    takenImage = NULL;
 
     return mrtdRecognizerSettings;
 }
@@ -238,7 +240,6 @@
      * Set this to NO if youre not interested in this data to speed up the scanning process!
      */
     ukdlRecognizerSettings.extractAddress = YES;
-
 
     return ukdlRecognizerSettings;
 }
@@ -305,6 +306,8 @@
 
     // Initialize the scanner settings object. This initialize settings with all default values.
     PPSettings *settings = [[PPSettings alloc] init];
+
+    settings.metadataSettings.dewarpedImage = YES;
 
     // Set PPCameraPresetOptimal for very dense or lower quality barcodes
     settings.cameraSettings.cameraPreset = PPCameraPresetOptimal;
@@ -425,6 +428,9 @@
 - (void)setDictionary:(NSMutableDictionary*)dict withMrtdRecognizerResult:(PPMrtdRecognizerResult*)mrtdResult {
     [dict setObject:[mrtdResult getAllStringElements] forKey:@"fields"];
     [dict setObject:[mrtdResult mrzText] forKey:@"raw"];
+    if (takenImage != NULL) {
+        [dict setObject:takenImage forKey:@"encodedImage"];
+    }
     [dict setObject:@"MRTD result" forKey:@"resultType"];
 }
 
@@ -546,6 +552,13 @@
 
 #pragma mark - PPScanDelegate delegate methods
 
+- (void)scanningViewController:(UIViewController<PPScanningViewController> *)scanningViewController didOutputMetadata:(PPMetadata *)metadata {
+    if ([metadata isKindOfClass:[PPImageMetadata class]] && [[metadata name] isEqual:@"MRTD"]) {
+
+        takenImage = [@"data:image/jpeg;base64," stringByAppendingString:[UIImageJPEGRepresentation([((PPImageMetadata*)metadata) image], 0.8) base64Encoding]];
+    }
+}
+
 - (void)scanningViewControllerUnauthorizedCamera:(UIViewController<PPScanningViewController> *)scanningViewController {
     // Add any logic which handles UI when app user doesn't allow usage of the phone's camera
 }
@@ -565,9 +578,8 @@
 
 - (void)scanningViewController:(UIViewController<PPScanningViewController> *)scanningViewController
               didOutputResults:(NSArray *)results {
-    
     [self returnResults:results cancelled:(results == nil)];
-    
+
     // As scanning view controller is presented full screen and modally, dismiss it
     [[self viewController] dismissViewControllerAnimated:YES completion:nil];
 }
