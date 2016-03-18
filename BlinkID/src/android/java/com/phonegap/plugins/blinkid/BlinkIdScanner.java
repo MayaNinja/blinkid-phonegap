@@ -36,7 +36,9 @@ import com.microblink.recognizers.settings.RecognizerSettings;
 import com.microblink.results.barcode.BarcodeDetailedData;
 
 import org.apache.cordova.CallbackContext;
+import org.apache.cordova.CordovaInterface;
 import org.apache.cordova.CordovaPlugin;
+import org.apache.cordova.CordovaWebView;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -77,16 +79,26 @@ public class BlinkIdScanner extends CordovaPlugin {
     private static final String TYPE = "type";
     private static final String DATA = "data";
     private static final String FIELDS = "fields";
+    private static final String IMAGE = "encodedImage";
     private static final String RAW_DATA = "raw";
 
     private static final String LOG_TAG = "BlinkIdScanner";
 
     private CallbackContext callbackContext;
 
+    private PluginImageListener imageListener;
+
     /**
      * Constructor.
      */
     public BlinkIdScanner() {
+    }
+
+    @Override
+    public void initialize(CordovaInterface cordova, CordovaWebView webView) {
+        super.initialize(cordova, webView);
+        PluginImageListener.setMaxWidth(preferences.getInteger("BlinkIDMaxWidth", 800));
+        imageListener = new PluginImageListener();
     }
 
     /**
@@ -180,8 +192,9 @@ public class BlinkIdScanner extends CordovaPlugin {
         // use ScanCard.EXTRAS_RECOGNITION_SETTINGS to set recognizer settings
         intent.putExtra(ScanCard.EXTRAS_RECOGNITION_SETTINGS, recognitionSettings);
 
+        intent.putExtra(ScanCard.EXTRAS_IMAGE_LISTENER, imageListener);
 
-        // If you want sound to be played after the scanning process ends, 
+        // If you want sound to be played after the scanning process ends,
         // put here the resource ID of your sound file. (optional)
         intent.putExtra(ScanCard.EXTRAS_BEEP_RESOURCE, fakeR.getId("raw", "beep"));
 
@@ -215,6 +228,7 @@ public class BlinkIdScanner extends CordovaPlugin {
         // By default this is off. The reason for this is that we want to ensure best possible
         // data quality when returning results.
         mrtd.setAllowUnparsedResults(false);
+        mrtd.setShowFullDocument(true);
         return mrtd;
     }
 
@@ -475,6 +489,9 @@ public class BlinkIdScanner extends CordovaPlugin {
         JSONObject result = new JSONObject();
         result.put(RESULT_TYPE, resultType);
         result.put(FIELDS, fields);
+        if (imageListener.getLastImage() != null) {
+            result.put(IMAGE, imageListener.getLastImage());
+        }
         return result;
     }
 

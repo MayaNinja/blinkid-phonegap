@@ -55,6 +55,7 @@
 
 
         <source-file src="src/android/java/com/phonegap/plugins/blinkid/BlinkIdScanner.java" target-dir="src/com/phonegap/plugins/blinkid" />
+        <source-file src="src/android/java/com/phonegap/plugins/blinkid/PluginImageListener.java" target-dir="src/com/phonegap/plugins/blinkid" />
         <source-file src="src/android/java/com/phonegap/plugins/blinkid/FakeR.java" target-dir="src/com/phonegap/plugins/blinkid" />
         
         <source-file src="src/android/blinkid-android/BlinkIDDemo/BlinkIDDemo/src/main/res/raw/beep.mp3" target-dir="res/raw" />
@@ -78,7 +79,7 @@
         <framework src="QuartzCore.framework" />
         <framework src="AudioToolbox.framework" />
         <framework src="OpenGLES.framework" />
-        <framework src="UiKit.framework" />
+        <framework src="UIKit.framework" />
         <framework src="Accelerate.framework" />
         <framework src="src/ios/MicroBlink.framework" custom="true" />
 
