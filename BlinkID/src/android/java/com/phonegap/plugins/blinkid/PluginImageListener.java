@@ -8,6 +8,7 @@ import android.util.Base64;
 
 import com.microblink.image.Image;
 import com.microblink.image.ImageListener;
+import com.microblink.image.ImageType;
 
 import java.io.ByteArrayOutputStream;
 
@@ -21,19 +22,31 @@ public class PluginImageListener implements ImageListener {
         maxWidth = value;
     }
 
+    private static String convertBitmap(Bitmap img) {
+        return convertBitmap(img, false);
+    }
+
+    private static String convertBitmap(Bitmap img, Boolean fixWidth) {
+        String output = null;
+        if (fixWidth && img.getWidth() > maxWidth) {
+            float aspectRatio = img.getWidth() / (float) img.getHeight();
+            Bitmap newImg = Bitmap.createScaledBitmap(img, maxWidth, Math.round(maxWidth / aspectRatio), false);
+            output = convertBitmap(newImg, false);
+            newImg.recycle();
+        } else {
+            ByteArrayOutputStream buffer = new ByteArrayOutputStream();
+            if (img.compress(Bitmap.CompressFormat.JPEG, 100, buffer)) {
+                output = PREFIX + Base64.encodeToString(buffer.toByteArray(), Base64.DEFAULT).replace("\n", "").replace("\r", "");
+            }
+        }
+        return output;
+    }
+
     public static String getLastImage() {
         if (lastImage != null && maxWidth > 0) {
             byte[] imageData = Base64.decode(lastImage.substring(PREFIX.length()), Base64.DEFAULT);
             Bitmap img = BitmapFactory.decodeByteArray(imageData, 0, imageData.length);
-            if (img.getWidth() > maxWidth) {
-                float aspectRatio = img.getWidth() / (float) img.getHeight();
-                Bitmap newImg = Bitmap.createScaledBitmap(img, maxWidth, Math.round(maxWidth / aspectRatio), false);
-                ByteArrayOutputStream buffer = new ByteArrayOutputStream();
-                if (newImg.compress(Bitmap.CompressFormat.JPEG, 100, buffer)) {
-                    lastImage = PREFIX + Base64.encodeToString(buffer.toByteArray(), Base64.DEFAULT).replace("\n", "").replace("\r", "");
-                }
-                newImg.recycle();
-            }
+            lastImage = convertBitmap(img, true);
             img.recycle();
         }
         return lastImage;
@@ -41,12 +54,11 @@ public class PluginImageListener implements ImageListener {
 
     @Override
     public void onImageAvailable(Image image) {
-        Bitmap img = image.convertToBitmap();
-        ByteArrayOutputStream buffer = new ByteArrayOutputStream();
-        if (img.compress(Bitmap.CompressFormat.JPEG, 100, buffer)) {
-            lastImage = PREFIX + Base64.encodeToString(buffer.toByteArray(), Base64.DEFAULT).replace("\n", "").replace("\r", "");
+        if (image.getImageType() == ImageType.DEWARPED) {
+            Bitmap img = image.convertToBitmap();
+            lastImage = convertBitmap(img);
+            img.recycle();
         }
-        img.recycle();
     }
 
     @Override
