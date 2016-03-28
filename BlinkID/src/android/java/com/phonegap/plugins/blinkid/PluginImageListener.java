@@ -18,7 +18,7 @@ public class PluginImageListener implements ImageListener {
     private static int maxWidth = 0;
     private static String lastImage = null;
     
-    private Boolean lockDewarped = false;
+    private static Boolean lockDewarped = false;
 
     public static void setMaxWidth(int value) {
         maxWidth = value;
@@ -28,7 +28,7 @@ public class PluginImageListener implements ImageListener {
         return convertBitmap(img, false);
     }
 
-    public void waitForDewarpedImage(Boolean wait) {
+    public static void waitForDewarpedImage(Boolean wait) {
         lockDewarped = wait;
     }
 
