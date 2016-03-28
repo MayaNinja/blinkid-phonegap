@@ -13,10 +13,12 @@ import com.microblink.image.ImageType;
 import java.io.ByteArrayOutputStream;
 
 public class PluginImageListener implements ImageListener {
-    private static int maxWidth = 0;
     private static final String PREFIX = "data:image/jpeg;base64,";
-
+    
+    private static int maxWidth = 0;
     private static String lastImage = null;
+    
+    private Boolean lockDewarped = false;
 
     public static void setMaxWidth(int value) {
         maxWidth = value;
@@ -24,6 +26,14 @@ public class PluginImageListener implements ImageListener {
 
     private static String convertBitmap(Bitmap img) {
         return convertBitmap(img, false);
+    }
+
+    public void waitForDewarpedImage(Boolean wait) {
+        lockDewarped = wait;
+    }
+
+    public static void resetImage() {
+        lastImage = null;
     }
 
     private static String convertBitmap(Bitmap img, Boolean fixWidth) {
@@ -54,7 +64,7 @@ public class PluginImageListener implements ImageListener {
 
     @Override
     public void onImageAvailable(Image image) {
-        if (image.getImageType() == ImageType.DEWARPED) {
+        if (!lockDewarped || image.getImageType() == ImageType.DEWARPED) {
             Bitmap img = image.convertToBitmap();
             lastImage = convertBitmap(img);
             img.recycle();

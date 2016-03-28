@@ -97,7 +97,7 @@ public class BlinkIdScanner extends CordovaPlugin {
     @Override
     public void initialize(CordovaInterface cordova, CordovaWebView webView) {
         super.initialize(cordova, webView);
-        PluginImageListener.setMaxWidth(preferences.getInteger("BlinkIDMaxWidth", 800));
+        PluginImageListener.setMaxWidth(preferences.getInteger("BlinkIDMaxWidth", 0));
         imageListener = new PluginImageListener();
     }
 
@@ -203,6 +203,8 @@ public class BlinkIdScanner extends CordovaPlugin {
 
 
     private RecognizerSettings buildRecognizerSettings(String type) {
+        PluginImageListener.resetImage();
+        PluginImageListener.waitForDewarpedImage(false);
         if (type.equals(PDF417_TYPE)) {
             return buildPDF417Settings();
         } else if (type.equals(USDL_TYPE)) {
@@ -212,6 +214,7 @@ public class BlinkIdScanner extends CordovaPlugin {
         } else if (type.equals(ZXING_TYPE)) {
             return buildZXingSettings();
         } else if (type.equals(MRTD_TYPE)) {
+            PluginImageListener.waitForDewarpedImage(true);
             return buildMrtdSettings();
         } else if (type.equals(UKDL_TYPE)) {
             return buildUkdlSettings();
@@ -489,8 +492,8 @@ public class BlinkIdScanner extends CordovaPlugin {
         JSONObject result = new JSONObject();
         result.put(RESULT_TYPE, resultType);
         result.put(FIELDS, fields);
-        if (imageListener.getLastImage() != null) {
-            result.put(IMAGE, imageListener.getLastImage());
+        if (PluginImageListener.getLastImage() != null) {
+            result.put(IMAGE, PluginImageListener.getLastImage());
         }
         return result;
     }
