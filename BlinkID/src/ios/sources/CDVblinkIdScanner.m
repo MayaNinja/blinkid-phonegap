@@ -240,6 +240,9 @@ NSString* takenImage;
      * Set this to NO if youre not interested in this data to speed up the scanning process!
      */
     ukdlRecognizerSettings.extractAddress = YES;
+    
+    ukdlRecognizerSettings.showFullDocument = YES;
+    takenImage = NULL;
 
     return ukdlRecognizerSettings;
 }
@@ -436,6 +439,9 @@ NSString* takenImage;
 
 - (void)setDictionary:(NSMutableDictionary*)dict withUkdlRecognizerResult:(PPUkdlRecognizerResult*)ukdlResult {
     [dict setObject:[ukdlResult getAllStringElements] forKey:@"fields"];
+    if (takenImage != NULL) {
+        [dict setObject:takenImage forKey:@"encodedImage"];
+    }
     [dict setObject:@"UKDL result" forKey:@"resultType"];
 }
 
@@ -553,9 +559,8 @@ NSString* takenImage;
 #pragma mark - PPScanDelegate delegate methods
 
 - (void)scanningViewController:(UIViewController<PPScanningViewController> *)scanningViewController didOutputMetadata:(PPMetadata *)metadata {
-    if ([metadata isKindOfClass:[PPImageMetadata class]] && [[metadata name] isEqual:@"MRTD"]) {
-
-        takenImage = [@"data:image/jpeg;base64," stringByAppendingString:[UIImageJPEGRepresentation([((PPImageMetadata*)metadata) image], 0.8) base64Encoding]];
+    if ([metadata isKindOfClass:[PPImageMetadata class]]) {
+        takenImage = [@"data:image/jpeg;base64," stringByAppendingString:[UIImageJPEGRepresentation([((PPImageMetadata*)metadata) image], 1) base64Encoding]];
     }
 }
 
