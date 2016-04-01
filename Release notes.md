@@ -1,3 +1,6 @@
+## 1.0.2
+- updated [iOS SDK](https://github.com/BlinkID/blinkid-ios) to  v1.3.0
+
 ## 1.0.1
 - updated [Android SDK](https://github.com/BlinkID/blinkid-android) to  v2.2.0
 
