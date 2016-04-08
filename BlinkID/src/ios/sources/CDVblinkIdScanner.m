@@ -191,7 +191,7 @@
      * @Warning: this option doubles frame processing time
      */
     zxingRecognizerSettings.scanInverse = NO;
-    
+
     return zxingRecognizerSettings;
 }
 
@@ -215,9 +215,9 @@
     return mrtdRecognizerSettings;
 }
 
-- (PPUkdlRecognizerSettings *)ukdlRecognizerSettings {
+- (PPEudlRecognizerSettings *)eudlRecognizerSettingsWithCountry:(PPEudlCountry)country {
 
-    PPUkdlRecognizerSettings *ukdlRecognizerSettings = [[PPUkdlRecognizerSettings alloc] init];
+    PPEudlRecognizerSettings *eudlRecognizerSettings = [[PPEudlRecognizerSettings alloc] initWithEudlCountry:country];
 
     /********* All recognizer settings are set to their default values. Change accordingly. *********/
 
@@ -225,22 +225,22 @@
      * If YES, document issue date will be extracted
      * Set this to NO if youre not interested in this data to speed up the scanning process!
      */
-    ukdlRecognizerSettings.extractIssueDate = YES;
+    eudlRecognizerSettings.extractIssueDate = YES;
 
     /**
      * If YES, document expiry date will be extracted
      * Set this to NO if youre not interested in this data to speed up the scanning process!
      */
-    ukdlRecognizerSettings.extractExpiryDate = YES;
+    eudlRecognizerSettings.extractExpiryDate = YES;
 
     /**
      * If YES, owner's address will be extracted
      * Set this to NO if youre not interested in this data to speed up the scanning process!
      */
-    ukdlRecognizerSettings.extractAddress = YES;
+    eudlRecognizerSettings.extractAddress = YES;
 
 
-    return ukdlRecognizerSettings;
+    return eudlRecognizerSettings;
 }
 
 - (PPMyKadRecognizerSettings *)myKadRecognizerSettings {
@@ -285,6 +285,10 @@
     return [types containsObject:@"UKDL"];
 }
 
+- (BOOL)shouldUseDedlRecognizerForTypes:(NSArray *)types {
+    return [types containsObject:@"DEDL"];
+}
+
 - (BOOL)shouldUseMyKadRecognizerForTypes:(NSArray *)types {
     return [types containsObject:@"MyKad"];
 }
@@ -295,7 +299,7 @@
 
     /** 0. Check if scanning is supported */
 
-    if ([PPCoordinator isScanningUnsupported:error]) {
+    if ([PPCoordinator isScanningUnsupportedForCameraType:PPCameraTypeBack error:error]) {
         return nil;
     }
 
@@ -341,7 +345,10 @@
     }
 
     if ([self shouldUseUkdlRecognizerForTypes:types]) {
-        [settings.scanSettings addRecognizerSettings:[self ukdlRecognizerSettings]];
+        [settings.scanSettings addRecognizerSettings:[self eudlRecognizerSettingsWithCountry:PPEudlCountryUnitedKingdom]];
+    }
+    if ([self shouldUseDedlRecognizerForTypes:types]) {
+        [settings.scanSettings addRecognizerSettings:[self eudlRecognizerSettingsWithCountry:PPEudlCountryGermany]];
     }
 
     if ([self shouldUseMyKadRecognizerForTypes:types]) {
@@ -428,9 +435,9 @@
     [dict setObject:@"MRTD result" forKey:@"resultType"];
 }
 
-- (void)setDictionary:(NSMutableDictionary*)dict withUkdlRecognizerResult:(PPUkdlRecognizerResult*)ukdlResult {
-    [dict setObject:[ukdlResult getAllStringElements] forKey:@"fields"];
-    [dict setObject:@"UKDL result" forKey:@"resultType"];
+- (void)setDictionary:(NSMutableDictionary*)dict withEudlRecognizerResult:(PPEudlRecognizerResult*)eudlResult {
+    [dict setObject:[eudlResult getAllStringElements] forKey:@"fields"];
+    [dict setObject:@"EUDL result" forKey:@"resultType"];
 }
 
 - (void)setDictionary:(NSMutableDictionary*)dict withMyKadRecognizerResult:(PPMyKadRecognizerResult*)myKadResult {
@@ -492,11 +499,11 @@
             [resultArray addObject:dict];
         }
 
-        if ([result isKindOfClass:[PPUkdlRecognizerResult class]]) {
-            PPUkdlRecognizerResult *ukdlDecoderResult = (PPUkdlRecognizerResult *)result;
+        if ([result isKindOfClass:[PPEudlRecognizerResult class]]) {
+            PPEudlRecognizerResult *eudlDecoderResult = (PPEudlRecognizerResult *)result;
 
             NSMutableDictionary* dict = [[NSMutableDictionary alloc] init];
-            [self setDictionary:dict withUkdlRecognizerResult:ukdlDecoderResult];
+            [self setDictionary:dict withEudlRecognizerResult:eudlDecoderResult];
 
             [resultArray addObject:dict];
         }
@@ -556,9 +563,9 @@
 }
 
 - (void)scanningViewControllerDidClose:(UIViewController<PPScanningViewController> *)scanningViewController {
-
+    
     [self returnResults:nil cancelled:YES];
-
+    
     // As scanning view controller is presented full screen and modally, dismiss it
     [[self viewController] dismissViewControllerAnimated:YES completion:nil];
 }
